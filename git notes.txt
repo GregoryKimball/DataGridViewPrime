@@ -1,0 +1,8 @@
+if the sync does not work
+
+
+
+git status
+git add -A 
+git commit -m "new commit"
+git push

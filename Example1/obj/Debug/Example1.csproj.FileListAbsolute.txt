@@ -1,0 +1,15 @@
+C:\Users\Gregory\Documents\GitHub\DataGridViewPrime\Example1\obj\Debug\Example1.csprojResolveAssemblyReference.cache
+C:\Users\Gregory\Documents\GitHub\DataGridViewPrime\Example1\obj\Debug\Example1.Form1.resources
+C:\Users\Gregory\Documents\GitHub\DataGridViewPrime\Example1\obj\Debug\Example1.Properties.Resources.resources
+C:\Users\Gregory\Documents\GitHub\DataGridViewPrime\Example1\obj\Debug\Example1.csproj.GenerateResource.Cache
+C:\Users\Gregory\Documents\GitHub\DataGridViewPrime\Example1\bin\Debug\Example1.exe.config
+C:\Users\Gregory\Documents\GitHub\DataGridViewPrime\Example1\bin\Debug\Example1.exe
+C:\Users\Gregory\Documents\GitHub\DataGridViewPrime\Example1\bin\Debug\Example1.pdb
+C:\Users\Gregory\Documents\GitHub\DataGridViewPrime\Example1\bin\Debug\DataGridViewPrime.dll
+C:\Users\Gregory\Documents\GitHub\DataGridViewPrime\Example1\bin\Debug\RDotNet.dll
+C:\Users\Gregory\Documents\GitHub\DataGridViewPrime\Example1\bin\Debug\ZedGraph.dll
+C:\Users\Gregory\Documents\GitHub\DataGridViewPrime\Example1\bin\Debug\DynamicInterop.dll
+C:\Users\Gregory\Documents\GitHub\DataGridViewPrime\Example1\bin\Debug\RDotNet.NativeLibrary.dll
+C:\Users\Gregory\Documents\GitHub\DataGridViewPrime\Example1\bin\Debug\DataGridViewPrime.pdb
+C:\Users\Gregory\Documents\GitHub\DataGridViewPrime\Example1\obj\Debug\Example1.exe
+C:\Users\Gregory\Documents\GitHub\DataGridViewPrime\Example1\obj\Debug\Example1.pdb

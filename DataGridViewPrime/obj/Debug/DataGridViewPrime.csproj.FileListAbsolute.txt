@@ -1,0 +1,9 @@
+C:\Users\Gregory\Documents\GitHub\DataGridViewPrime\DataGridViewPrime\obj\Debug\DataGridViewPrime.csprojResolveAssemblyReference.cache
+C:\Users\Gregory\Documents\GitHub\DataGridViewPrime\DataGridViewPrime\bin\Debug\DataGridViewPrime.dll
+C:\Users\Gregory\Documents\GitHub\DataGridViewPrime\DataGridViewPrime\bin\Debug\DataGridViewPrime.pdb
+C:\Users\Gregory\Documents\GitHub\DataGridViewPrime\DataGridViewPrime\bin\Debug\DynamicInterop.dll
+C:\Users\Gregory\Documents\GitHub\DataGridViewPrime\DataGridViewPrime\bin\Debug\RDotNet.dll
+C:\Users\Gregory\Documents\GitHub\DataGridViewPrime\DataGridViewPrime\bin\Debug\RDotNet.NativeLibrary.dll
+C:\Users\Gregory\Documents\GitHub\DataGridViewPrime\DataGridViewPrime\bin\Debug\ZedGraph.dll
+C:\Users\Gregory\Documents\GitHub\DataGridViewPrime\DataGridViewPrime\obj\Debug\DataGridViewPrime.dll
+C:\Users\Gregory\Documents\GitHub\DataGridViewPrime\DataGridViewPrime\obj\Debug\DataGridViewPrime.pdb
