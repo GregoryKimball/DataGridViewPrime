@@ -8,6 +8,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using DataGridViewPrimeNamespace;
+using IODataTableNamespace;
 
 
 namespace Example1
@@ -22,7 +23,10 @@ namespace Example1
         private void button1_Click(object sender, EventArgs e)
         {
             string s = @"C: \Users\Gregory\Desktop\table1.csv";
-            dataGridViewPrime1.SetDataSource(IODataTable.LoadCSVtoDataTable(s));
+
+            IODataTable iodt = new IODataTable();
+
+            dataGridViewPrime1.SetDataSource(iodt.LoadCSVtoDataTable(s));
         }
     }
 }

@@ -35,6 +35,7 @@
     </Reference>
     <Reference Include="RDotNet">
       <HintPath>.\RDotNet.dll</HintPath>
+      <EmbedInteropTypes>False</EmbedInteropTypes>
     </Reference>
     <Reference Include="RDotNet.NativeLibrary">
       <HintPath>.\RDotNet.NativeLibrary.dll</HintPath>
@@ -52,10 +53,12 @@
     <Reference Include="System.Xml" />
     <Reference Include="ZedGraph">
       <HintPath>.\ZedGraph.dll</HintPath>
+      <EmbedInteropTypes>False</EmbedInteropTypes>
     </Reference>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="DataGridViewPrime.cs" />
+    <Compile Include="IODataTable.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

@@ -9,6 +9,8 @@ using System.Drawing;
 using System.Windows.Forms;
 using System.Data;
 using System.Dynamic;
+using IODataTableNamespace;
+
 
 namespace DataGridViewPrimeNamespace
 {
@@ -78,189 +80,7 @@ namespace DataGridViewPrimeNamespace
 
     }//*/
 
-
-    public class IODataTable
-    {
-        public static string[] CleanSplit(string input)
-        {
-
-            StringBuilder sb = new StringBuilder(input);
-
-            bool inside_quotes = false;
-            for (int i = 0; i < sb.Length; i++)
-            {
-                if (sb[i] == '\"')
-                {
-                    inside_quotes = !inside_quotes;
-                }
-
-                if (sb[i] == ',' && inside_quotes)
-                {
-                    sb[i] = '¸';
-                }
-
-
-            }
-
-            input = sb.ToString();
-
-
-            return input.Split(',');
-        }
-
-        public static void SaveDataTabletoCSV(string filename, DataTable dt)
-        {
-
-            string dir = Path.GetDirectoryName(filename);
-            if (!Directory.Exists(dir))
-                Directory.CreateDirectory(dir);
-
-
-            StreamWriter sw = new StreamWriter(filename);
-
-
-            string s_out;
-
-            for (int i = 0; i < dt.Columns.Count; i++)
-            {
-                DataColumn dc = dt.Columns[i];
-                s_out = dc.ColumnName.Replace(',', '¸');
-                sw.Write(dc.ColumnName);
-
-                if (i < dt.Columns.Count - 1)
-                    sw.Write(',');
-            }
-
-            sw.WriteLine();
-
-            foreach (DataRow dr in dt.Rows)
-            {
-                for (int i = 0; i < dt.Columns.Count; i++)
-                {
-                    s_out = dr[dt.Columns[i]].ToString().Replace(',', '¸');
-                    sw.Write(s_out);
-
-                    if (i < dt.Columns.Count - 1)
-                        sw.Write(',');
-                }
-                sw.WriteLine();
-            }
-
-
-
-
-            sw.Close();
-
-
-
-
-
-        }
-
-        public static DataTable LoadCSVtoDataTable(string strFile, int rowSkip = 0, int rowRequest = -1)
-        {
-
-            DataTable dtCSV = new DataTable();
-
-
-            if (!File.Exists(strFile))
-                return dtCSV;
-
-
-            try
-            {
-                StreamReader sr = new StreamReader(strFile);
-
-
-
-
-                string headers;
-
-                for (int i = 0; i < rowSkip; i++)
-                {
-                    headers = sr.ReadLine();
-
-                }
-
-
-                headers = sr.ReadLine();
-
-                string[] header_list = headers.Split(',');
-
-
-                DataColumn dc;
-
-                int append;
-                string name;
-                for (int i = 0; i < header_list.Length; i++)
-                {
-                    name = header_list[i];
-                    append = 1;
-
-                    while (dtCSV.Columns.Contains(name))
-                    {
-                        name = header_list[i] + append.ToString();
-                        append++;
-                    }
-
-                    dc = new DataColumn();
-                    dc.ColumnName = name;
-                    dtCSV.Columns.Add(dc);
-                }
-
-                string row;
-                string[] row_list;
-                int len;
-                object[] o;
-
-                try
-                {
-                    int j = 0;
-                    while (!sr.EndOfStream && j != rowRequest)
-                    {
-                        j++;
-                        row = sr.ReadLine();
-                        //row_list = row.Split(',');
-                        row_list = CleanSplit(row);
-                        len = row_list.Length;
-
-                        o = new object[len];
-
-                        for (int i = 0; i < len; i++)
-                        {
-                            if (row_list[i] == "NULL" || row_list[i] == "")
-                                o[i] = (object)null;
-                            else
-                                o[i] = (object)row_list[i];
-                        }
-
-                        dtCSV.Rows.Add(o);
-
-                    }
-                }
-                catch (Exception exp)
-                {
-                    throw new Exception("Error in parsing " + strFile + ":\r\n" + exp.Message);   
-                }
-
-
-
-                sr.Close();
-                sr.Dispose();
-
-
-            }
-            catch (Exception exp)
-            {
-                throw new Exception("Error in with file " + strFile + ":\r\n" + exp.Message);
-            }
-
-
-            return dtCSV;
-
-
-        }
-    }
+    
 
 
     public class ZedGraphControlPrime : ZedGraphControl
@@ -443,8 +263,8 @@ namespace DataGridViewPrimeNamespace
 
         public void SetGraph()
         {
-
-            this.GraphPane.CurveList.Clear();
+            if (this.GraphPane != null)
+                this.GraphPane.CurveList.Clear();
 
             for (int i = 0; i < y_source.Count; i++)
             {
@@ -891,7 +711,7 @@ namespace DataGridViewPrimeNamespace
         }
 
 
-
+        //the amendment function is too specific - needs to be generalized 
         private void AddAmendment(DataGridViewCell dgvc)
         {
             object new_value, inverter_name = null, project_name = null, column_name, combiner_name = null, site_rank = null;
@@ -910,7 +730,7 @@ namespace DataGridViewPrimeNamespace
             if (this.Columns.Contains("site_rank"))
                 site_rank = dgvc.OwningRow.Cells["site_rank"].Value;
 
-            myAmendments.Rows.Add(new object[7] { null, new_value, column_name, inverter_name, project_name, combiner_name, site_rank });
+            //myAmendments.Rows.Add(new object[7] { null, new_value, column_name, inverter_name, project_name, combiner_name, site_rank });
 
         }
 
@@ -991,7 +811,11 @@ namespace DataGridViewPrimeNamespace
 
             this.LastDirectory = Path.GetDirectoryName(sf.FileName);
 
-            IODataTable.SaveDataTabletoCSV(sf.FileName, (DataTable)this.DataSource);
+
+
+            IODataTable iodt = new IODataTable();
+            
+            iodt.SaveDataTabletoCSV(sf.FileName, (DataTable)this.DataSource);
         }
 
 
