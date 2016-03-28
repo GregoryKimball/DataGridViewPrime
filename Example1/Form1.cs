@@ -22,11 +22,16 @@ namespace Example1
 
         private void button1_Click(object sender, EventArgs e)
         {
+
+           
             string s = @"C: \Users\Gregory\Desktop\table1.csv";
 
             IODataTable iodt = new IODataTable();
+            DataTable d = iodt.LoadCSVtoDataTable(s);
 
-            dataGridViewPrime1.SetDataSource(iodt.LoadCSVtoDataTable(s));
+
+            //dataGridViewPrime1.userInputMode = UserInputMode.Readonly;
+            dataGridViewPrime1.SetDataSource(d);
         }
     }
 }
