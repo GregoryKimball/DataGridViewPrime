@@ -18,12 +18,10 @@ namespace DataGridViewPrimeNamespace
     public class RFunctions
     {
 
-
         public RFunctions(REngine engine)
         {
 
         }
-
 
         public static List<double> GetLinearRegression(REngine engine, double[] xdata, double[] ydata)
         {
@@ -74,11 +72,7 @@ namespace DataGridViewPrimeNamespace
             return ld;
         }
 
-
-
-
-
-    }//*/
+    }
 
     
 
@@ -146,9 +140,7 @@ namespace DataGridViewPrimeNamespace
         }
 
         #endregion
-
-
-
+        
 
         #region context menu
 
@@ -245,9 +237,7 @@ namespace DataGridViewPrimeNamespace
 
         #endregion
 
-
-
-
+        
         #region graphing functions
 
         private Color[] ColorScheme = { Color.Blue, Color.Red, Color.Green, Color.LightBlue, Color.Pink, Color.LightGreen };
@@ -537,14 +527,17 @@ namespace DataGridViewPrimeNamespace
         ZedGraphControlPrime zed;
         REngine engine;
 
-        protected DataTable myAmendments;        
-           
+        public event EventHandler SaveReady;
+        protected DataTable myAmendments;
+        public List<string> amendmentPrimaryKeys = new List<string> { };
+        protected List<DataGridViewCell> editedCells = new List<DataGridViewCell> { };
+
         protected string LastDirectory;
         protected string FileName;
         
 
 
-        #region front_end
+        #region front end constants
 
         protected static Color CellChanged = Color.LemonChiffon;
         protected static Color AmendmentError = Color.LightPink;
@@ -559,43 +552,10 @@ namespace DataGridViewPrimeNamespace
 
         public bool CanOpenFiles = true;
         public bool CanSaveFiles = true;
-        public enum UserEditMode { ReadOnly, SaveToFile, SaveAmendments};
+        public enum UserEditMode { ReadOnly, SaveToFile, SaveToFileEvent, SaveAmendmentEvent};
         public UserEditMode userEditMode = UserEditMode.ReadOnly;
 
-        public List<string> amendmentPrimaryKeys = new List<string> { };
-
-        private bool SavesLocally()
-        {
-            switch(userEditMode)
-            {
-                case UserEditMode.SaveToFile:
-                    return true;
-                case UserEditMode.ReadOnly:
-                    return false;
-                case UserEditMode.SaveAmendments:
-                    return true;
-                default:
-                    return false;
-            }
-        }
-
-        public DataTable GetSaveDataTable()
-        {
-            switch (userEditMode)
-            {
-                case UserEditMode.SaveToFile:
-                    return (DataTable) this.DataSource;
-                case UserEditMode.ReadOnly:
-                    return new DataTable();
-                case UserEditMode.SaveAmendments:
-                    return myAmendments;
-                default:
-                    return new DataTable();
-            }
-        }
-
-
-       
+        
 
 
         public DataGridViewPrime() : base()
@@ -632,6 +592,8 @@ namespace DataGridViewPrimeNamespace
 
 
 
+        #region saving behavior
+
         public void SetModeAmendments(List<string> primaryKeys_in)
         {
             if (primaryKeys_in.Count < 1)
@@ -652,18 +614,26 @@ namespace DataGridViewPrimeNamespace
             }
 
 
-            userEditMode = UserEditMode.SaveAmendments;
+            userEditMode = UserEditMode.SaveAmendmentEvent;
             this.ReadOnly = false;
             this.CanSaveFiles = true;
         }
-        public void SetModeSavesLocally(string FileName_in)
+        public void SetModeSavesLocal()
         {
             amendmentPrimaryKeys = new List<string> { };
             userEditMode = UserEditMode.SaveToFile;
             this.ReadOnly = false;
             this.CanSaveFiles = true;
-
         }
+
+        public void SetModeSaveEvent()
+        {
+            amendmentPrimaryKeys = new List<string> { };
+            userEditMode = UserEditMode.SaveToFileEvent;
+            this.ReadOnly = false;
+            this.CanSaveFiles = true;
+        }
+
         public void SetModeReadonly()
         {
             amendmentPrimaryKeys = new List<string> { };
@@ -672,6 +642,192 @@ namespace DataGridViewPrimeNamespace
             this.CanSaveFiles = false;
         }
 
+        public DataTable GetSaveDataTable()
+        {
+            switch (userEditMode)
+            {
+                case UserEditMode.SaveToFile:
+                    return (DataTable)this.DataSource;
+                case UserEditMode.SaveToFileEvent:
+                    return (DataTable)this.DataSource;
+                case UserEditMode.ReadOnly:
+                    return new DataTable();
+                case UserEditMode.SaveAmendmentEvent:
+                    return myAmendments;
+                default:
+                    return new DataTable();
+            }
+        }
+
+        private void SaveLocally()
+        {
+            if (this.DataSource == null)
+                return;
+
+            int changes = editedCells.Count;
+
+            DialogResult mb = MessageBox.Show("Changes to " + changes.ToString() + " cell(s) have been registered for this data file. " + Environment.NewLine + "Would you like to save changes to: " + Environment.NewLine + this.FileName, "Save changes?", MessageBoxButtons.YesNoCancel);
+
+            if (mb != DialogResult.Yes)
+                return;
+
+
+            IODataTable iodt = new IODataTable();
+            iodt.SaveDataTabletoCSV(this.FileName, (DataTable)this.DataSource);
+
+        }
+
+        protected virtual void SaveLocally(EventArgs e)
+        {
+
+            if (this.DataSource == null)
+                return;
+
+            int changes = editedCells.Count;
+
+            DialogResult mb = MessageBox.Show("Changes to " + changes.ToString() + " cell(s) have been registered for this data file. " + Environment.NewLine + "Would you like to save changes?", "Save changes?", MessageBoxButtons.YesNoCancel);
+
+            if (mb != DialogResult.Yes)
+                return;
+
+
+
+            EventHandler handler = SaveReady;
+            if (handler != null)
+            {
+                handler(this, e);
+            }
+        }
+
+        protected virtual void SaveAmendments(EventArgs e)
+        {
+            if (this.DataSource == null)
+                return;
+
+            int changes = editedCells.Count;
+
+            DialogResult mb = MessageBox.Show("Changes to " + changes.ToString() + " cell(s) have been registered for this data file. " + Environment.NewLine + "Would you like to save amendments?", "Save changes?", MessageBoxButtons.YesNoCancel);
+
+            if (mb != DialogResult.Yes)
+                return;
+
+            EventHandler handler = SaveReady;
+            if (handler != null)
+            {
+                handler(this, e);
+            }
+        }
+
+
+        #endregion
+                
+
+        #region overloaded events
+
+        protected override void OnMouseClick(MouseEventArgs e)
+        {
+            base.OnMouseClick(e);
+
+            if (e.Button == System.Windows.Forms.MouseButtons.Right)
+            {
+                List<MenuItem> ls = GetMenuItems();
+                ContextMenu = new System.Windows.Forms.ContextMenu();
+                ContextMenu.MenuItems.AddRange(ls.ToArray());
+                ContextMenu.Show(this, new System.Drawing.Point(e.X, e.Y));
+            }
+        }
+
+        protected override void OnCellEndEdit(DataGridViewCellEventArgs e)
+        {
+            base.OnCellEndEdit(e);
+
+
+            this.CurrentCell.Style.BackColor = DataGridViewPrime.CellChanged;
+
+            if (this.userEditMode == UserEditMode.SaveAmendmentEvent )
+            {
+                if (AmendmentKeysOk())
+                    AddAmendment(this.CurrentCell);
+                else                 
+                    this.CurrentCell.Style.BackColor = DataGridViewPrime.AmendmentError;
+            }
+            else
+                editedCells.Add(this.CurrentCell);
+
+
+        }
+
+        protected override void OnSelectionChanged(EventArgs e)
+        {
+            base.OnSelectionChanged(e);
+
+            if (displayGraph)
+                SetGraph();
+
+
+        }
+                
+        protected override void OnKeyDown(KeyEventArgs e)
+        {
+            base.OnKeyDown(e);
+
+
+            if (e.Control && e.KeyCode == Keys.V)
+            {
+                string s = Clipboard.GetText();
+
+                int c = this.CurrentCell.OwningColumn.Index;
+                int r = this.CurrentCell.OwningRow.Index;
+                int cell_data_count = s.Split(new char[2] { '\t', '\n' }).Length;
+
+                int cols = s.Split('\n')[0].Split('\t').Length;
+                int rows = s.Split('\n').Length;
+
+
+                if (this.SelectedCells.Count == 1 && cell_data_count > 1)
+                {
+                    for (int i = 0; i < rows; i++)
+                    {
+                        for (int j = 0; j < cols; j++)
+                        {
+                            string t = s.Split(new char[2] { '\t', '\n' })[i * cols + j].Trim();
+                            this.Rows[r + i].Cells[c + j].Value = t;
+                            this.Rows[r + i].Cells[c + j].Style.BackColor = DataGridViewPrime.CellChanged;
+
+                            if (userEditMode == UserEditMode.SaveAmendmentEvent)
+                                AddAmendment(this.Rows[r + i].Cells[c + j]);
+                            else
+                                editedCells.Add(this.Rows[r + i].Cells[c + j]);
+                        }
+                    }
+                }
+
+                if (this.SelectedCells.Count > 1 && cell_data_count == 1)
+                {
+                    foreach (DataGridViewCell dc in this.SelectedCells)
+                    {
+                        dc.Value = s.Trim();
+                        dc.Style.BackColor = DataGridViewPrime.CellChanged;
+
+                        if (userEditMode == UserEditMode.SaveAmendmentEvent)
+                            AddAmendment(dc);
+                        else
+                            editedCells.Add(dc);
+                    }
+                }
+
+
+            }
+
+
+        }
+        
+        #endregion
+        
+
+        #region context menu
+
+        [STAThread]
 
 
         protected virtual List<MenuItem> GetMenuItems()
@@ -713,148 +869,12 @@ namespace DataGridViewPrimeNamespace
             ls.Add(mi);
 
 
-           
+
 
 
             return ls;
         }
 
-
-        #region overloaded events
-
-        protected override void OnMouseClick(MouseEventArgs e)
-        {
-            base.OnMouseClick(e);
-
-            if (e.Button == System.Windows.Forms.MouseButtons.Right)
-            {
-                List<MenuItem> ls = GetMenuItems();
-                ContextMenu = new System.Windows.Forms.ContextMenu();
-                ContextMenu.MenuItems.AddRange(ls.ToArray());
-                ContextMenu.Show(this, new System.Drawing.Point(e.X, e.Y));
-            }
-        }
-        protected override void OnCellEndEdit(DataGridViewCellEventArgs e)
-        {
-            base.OnCellEndEdit(e);
-
-
-            this.CurrentCell.Style.BackColor = DataGridViewPrime.CellChanged;
-
-            if (this.userEditMode == UserEditMode.SaveAmendments )
-            {
-                if (AmendmentKeysOk())
-                    AddAmendment(this.CurrentCell);
-                else
-                    this.CurrentCell.Style.BackColor = DataGridViewPrime.AmendmentError;
-
-            }
-
-        }
-
-        protected bool AmendmentKeysOk()
-        {
-            DataTable dt = (DataTable)this.DataSource;
-            foreach(string s in amendmentPrimaryKeys)
-            {
-                if (!dt.Columns.Contains(s))
-                    return false;
-            }
-            return true;
-
-        }
-
-
-        protected override void OnSelectionChanged(EventArgs e)
-        {
-            base.OnSelectionChanged(e);
-
-            if (displayGraph)
-                SetGraph();
-
-
-        }
-
-
-        //the amendment function is too specific - needs to be generalized 
-        private void AddAmendment(DataGridViewCell dgvc)
-        {   
-
-            List<object> change = new List<object> { };
-
-            change.Add((object)dgvc.OwningColumn.Name);
-            change.Add((object)dgvc.Value);
-
-            foreach(string s in amendmentPrimaryKeys)
-            {
-                change.Add((object)s);
-                change.Add((object)dgvc.OwningRow.Cells[s].Value);
-            }
-           
-            myAmendments.Rows.Add(change.ToArray());
-
-        }
-
-
-        protected override void OnKeyDown(KeyEventArgs e)
-        {
-            base.OnKeyDown(e);
-
-
-            if (e.Control && e.KeyCode == Keys.V)
-            {
-                string s = Clipboard.GetText();
-
-                int c = this.CurrentCell.OwningColumn.Index;
-                int r = this.CurrentCell.OwningRow.Index;
-                int cell_data_count = s.Split(new char[2] { '\t', '\n' }).Length;
-
-                int cols = s.Split('\n')[0].Split('\t').Length;
-                int rows = s.Split('\n').Length;
-
-
-                if (this.SelectedCells.Count == 1 && cell_data_count > 1)
-                {
-                    for (int i = 0; i < rows; i++)
-                    {
-                        for (int j = 0; j < cols; j++)
-                        {
-                            string t = s.Split(new char[2] { '\t', '\n' })[i * cols + j].Trim();
-                            this.Rows[r + i].Cells[c + j].Value = t;
-                            this.Rows[r + i].Cells[c + j].Style.BackColor = DataGridViewPrime.CellChanged;
-
-                            if (userEditMode == UserEditMode.SaveAmendments)
-                                AddAmendment(this.Rows[r + i].Cells[c + j]);
-                        }
-                    }
-                }
-
-                if (this.SelectedCells.Count > 1 && cell_data_count == 1)
-                {
-                    foreach (DataGridViewCell dc in this.SelectedCells)
-                    {
-                        dc.Value = s.Trim();
-                        dc.Style.BackColor = DataGridViewPrime.CellChanged;
-
-                        if (userEditMode == UserEditMode.SaveAmendments)
-                            AddAmendment(dc);
-                    }
-                }
-
-
-            }
-
-
-        }
-
-
-        #endregion
-
-
-
-        #region custom events
-
-        [STAThread]
 
         private void SaveMenuItem_Click(object sender, EventArgs e)
         {
@@ -862,23 +882,21 @@ namespace DataGridViewPrimeNamespace
             if (this.DataSource == null)
                 return;
 
-            if (userEditMode == UserEditMode.SaveToFile)
-            {
+            if (userEditMode == UserEditMode.SaveToFile)            
                 SaveLocally();
-            }
 
-            if (userEditMode == UserEditMode.SaveAmendments)
-            {
-                SaveLocally();
-            }
-            
+            if (userEditMode == UserEditMode.SaveAmendmentEvent)        
+                SaveAmendments(new EventArgs());
 
-            foreach (DataGridViewRow dr in this.Rows)
+            if (userEditMode == UserEditMode.SaveToFileEvent)
+                SaveLocally(new EventArgs());
+
+
+            foreach (DataGridViewCell dc in editedCells)
             {
-                foreach (DataGridViewCell dc in dr.Cells)
-                {
-                    dc.Style.BackColor = Color.White;
-                }
+                
+                dc.Style.BackColor = Color.White;
+                
             }
             
         }
@@ -904,7 +922,7 @@ namespace DataGridViewPrimeNamespace
 
             this.LastDirectory = Path.GetDirectoryName(of.FileName);
             this.FileName = of.FileName;
-            SetModeSavesLocally(of.FileName);
+            SetModeSavesLocal();
 
             IODataTable iodt = new IODataTable();
             DataTable dt = iodt.LoadCSVtoDataTable(of.FileName);
@@ -938,30 +956,7 @@ namespace DataGridViewPrimeNamespace
 
 
 
-        private void SaveLocally()
-        {
-            if (this.DataSource == null)
-                return;
-            
-            int changes = GetChangedCellCount();
-
-            DialogResult mb = MessageBox.Show("Changes to " + changes.ToString() + " cell(s) have been registered for this data file. " + Environment.NewLine + "Would you like to save changes to: " + Environment.NewLine + this.FileName, "Save changes?", MessageBoxButtons.YesNoCancel);
-
-            if (mb != DialogResult.Yes)
-                return;
-
-
-            IODataTable iodt = new IODataTable();
-            iodt.SaveDataTabletoCSV(this.FileName, (DataTable)this.DataSource);         
-
-        }
-
-        public virtual void SaveAmendments()
-        {   
-
-
-        }
-
+       
 
 
 
@@ -1020,6 +1015,117 @@ namespace DataGridViewPrimeNamespace
         }
 
         #endregion
+        
+
+        #region amendments
+
+        /*
+
+            Amendments are changes to a datatable.
+            
+            Each amendment is defined by a list of primary keys and when a datarow matches the primary keys, the value is changed.
+
+            The purpose of amendments is to apply changes to a datatable every time it is loaded without editing the file.
+
+        */
+
+        public void SetAmendments(DataTable amendments_in)
+        {
+            myAmendments = amendments_in;
+        }     
+
+        protected bool AmendmentKeysOk()
+        {
+            DataTable dt = (DataTable)this.DataSource;
+            foreach (string s in amendmentPrimaryKeys)
+            {
+                if (!dt.Columns.Contains(s))
+                    return false;
+            }
+            return true;
+
+        }
+
+
+
+
+        protected void AddAmendment(DataGridViewCell dgvc)
+        {
+
+            List<object> change = new List<object> { };
+
+            change.Add((object)dgvc.OwningColumn.Name);
+            change.Add((object)dgvc.Value);
+
+            foreach (string s in amendmentPrimaryKeys)
+            {
+                change.Add((object)s);
+                change.Add((object)dgvc.OwningRow.Cells[s].Value);
+            }
+
+            myAmendments.Rows.Add(change.ToArray());
+            editedCells.Add(dgvc);
+        }
+
+     
+        protected void ApplyAmendments()
+        {
+
+
+            
+
+            
+            string new_value;
+            string column_name;
+            DataRow[] row;
+            DataTable dt = (DataTable)this.DataSource;
+
+            foreach (DataRow dr in myAmendments.Rows)
+            {
+                new_value = dr["new_value"].ToString();
+                column_name = dr["column_name"].ToString();
+
+
+                string where_statement = "";
+                //column_name new_value   column0 value0
+
+
+                string col_name = "column0";
+                string val_name = "value0";
+                string col = "";
+                string val = "";
+                int num = 0;
+
+                while(myAmendments.Columns.Contains(col_name))
+                {
+                    col = dr[col_name].ToString();
+                    val = dr[val_name].ToString();
+
+                    if (num > 0)
+                        where_statement += " and ";
+
+                    if (col != "" && val != "")
+                        where_statement += col + " = '" + val + "' ";
+
+                    num++;
+                    col_name = "column" + num.ToString();
+                    val_name = "value" + num.ToString();
+                }
+                    
+
+                row = dt.Select(where_statement);
+
+                if (row.Length > 0)
+                {
+                    row[0][column_name] = new_value;                                        
+                }
+            }
+
+        }
+
+
+
+        #endregion
 
 
 
@@ -1073,19 +1179,9 @@ namespace DataGridViewPrimeNamespace
 
 
 
-
-
-        public void SetAmendmentsTemplate(DataTable amendments_in)
-        {
-            myAmendments = amendments_in;
-        }
-
-
-
-        public void SetDataSource(DataTable d)
+        protected List<string> GetSelectedColumns()
         {
             List<string> selectedColumns = new List<string> { };
-
             foreach (DataGridViewCell v in this.SelectedCells)
             {
                 string s = v.OwningColumn.Name;
@@ -1095,65 +1191,62 @@ namespace DataGridViewPrimeNamespace
             }
 
             selectedColumns.Sort();
-            this.ClearSelection();
-            //////////////
-            this.DataSource = null;
 
-            if (this.myAmendments != null)
-                this.myAmendments.Rows.Clear();
+            return selectedColumns;
+        }
+        protected void  SetSelectedColumns(List<string> selectedColumns)
+        {
+            foreach (string s in selectedColumns)
+            {
 
-            this.ClipboardCopyMode = DataGridViewClipboardCopyMode.EnableWithoutHeaderText;
+                List<string> t = new List<string> { };
+                string t2 = s;
 
-            //////////////
 
-            if (d.Columns.Count < 200)
-                this.DataSource = d;
+                if (this.Columns.Contains(t2))
+                    this[t2, 0].Selected = true;
+            }
+        }
+        protected void CheckAndCropDataColumns(ref DataTable data)
+        {
+            if (data.Columns.Count < 200)
+                return;
             else
             {
-                for (int i = d.Columns.Count - 10; i > 200; i--)
+                for (int i = data.Columns.Count - 10; i > 200; i--)
                 {
-                    d.Columns.RemoveAt(i);
+                    data.Columns.RemoveAt(i);
 
-                }
-                this.DataSource = d;
+                }               
             }
-
-            if (d.Rows.Count > 1)
-            {
-                foreach (string s in selectedColumns)
-                {
-
-                    List<string> t = new List<string> { };
-                    string t2 = s;
-
-                    if (s.Contains("Current DC"))
-                    {
-                        //t = ManipulateDataTable.FindCurrentDCColumns(d);
-                        if (t.Count > 0)
-                            t2 = t[0];
-                    }
-
-                    if (s.Contains("Voltage DC"))
-                    {
-                        //t = ManipulateDataTable.FindVoltageDCColumns(d);
-                        if (t.Count > 0)
-                            t2 = t[0];
-                    }
-                    //ManipulateDataTable.FindCurrentDCColumns(d);
-
-
-                    if (this.Columns.Contains(t2))
-                        this[t2, 0].Selected = true;
-                }
-            }
-
-
 
         }
 
 
-        private delegate void MergeDataSourceDelegate(DataTable d);
 
+
+        public void SetDataSource(DataTable d)
+        {
+            SetDataSource(d, new DataTable());
+        }
+        public void SetDataSource(DataTable d, DataTable amendments_in)
+        
+        {
+            List<string> selectedColumns = GetSelectedColumns();
+                        
+            CheckAndCropDataColumns(ref d);
+            this.DataSource = null;
+            this.DataSource = d;
+
+            this.myAmendments = amendments_in;
+            editedCells = new List<DataGridViewCell> { };
+            ApplyAmendments();
+            
+            SetSelectedColumns(selectedColumns);
+        }
+
+
+        private delegate void MergeDataSourceDelegate(DataTable d);
         public void MergeDataSource(DataTable d)
         {
             if (this.InvokeRequired)
@@ -1184,11 +1277,9 @@ namespace DataGridViewPrimeNamespace
         }
 
 
-        
-        
 
-       
 
+        #region format datagridview
 
         public void SetNumberFormat(string columnName, string format)
         {
@@ -1200,8 +1291,6 @@ namespace DataGridViewPrimeNamespace
 
             this.Columns[columnName].DefaultCellStyle = cs;
         }
-
-
         public void SetPercentFormat()
         {
 
@@ -1218,10 +1307,6 @@ namespace DataGridViewPrimeNamespace
 
             }
         }
-
-
-     
-
         public void SetWrapFormat()
         {
 
@@ -1280,24 +1365,8 @@ namespace DataGridViewPrimeNamespace
 
         }
 
+        #endregion
 
-        public int GetChangedCellCount()
-        {
-
-            int counter = 0;
-
-            foreach (DataGridViewRow row in this.Rows)
-            {
-                foreach (DataGridViewCell cell in row.Cells)
-                {
-                    if (cell.Style.BackColor == DataGridViewPrime.CellChanged)
-                        counter++;                    
-                }
-            }
-
-            return counter;
-
-        }
 
 
 
